@@ -41,6 +41,7 @@ export default function FillBlank({ recordAnswer, onAchievement, onStreak }) {
         const ns = s + 1;
         if (ns >= 5) onAchievement('streak_5');
         if (ns >= 10) onAchievement('streak_10');
+        if (ns >= 20) onAchievement('streak_20');
         onStreak(ns);
         return ns;
       });

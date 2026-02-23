@@ -47,22 +47,31 @@ export default function App() {
     let totalCorrect = 0;
     let allSeen = true;
     let allMastered = true;
+    const catSeen = {};
     TERMS.forEach(t => {
       const p = progress[t.term];
+      if (!catSeen[t.cat]) catSeen[t.cat] = true;
       if (p) {
         totalCorrect += p.correct;
-        if (p.seen === 0) allSeen = false;
+        if (p.seen === 0) { allSeen = false; catSeen[t.cat] = false; }
         if (!(p.conf >= 4 && p.interval >= 86400000)) allMastered = false;
       } else {
         allSeen = false;
         allMastered = false;
+        catSeen[t.cat] = false;
       }
     });
     if (totalCorrect >= 10) onAchievement('ten_correct');
     if (totalCorrect >= 50) onAchievement('fifty_correct');
     if (totalCorrect >= 100) onAchievement('hundred_correct');
+    if (totalCorrect >= 250) onAchievement('two_fifty_correct');
+    if (totalCorrect >= 500) onAchievement('five_hundred_correct');
     if (allSeen) onAchievement('all_seen');
     if (allMastered) onAchievement('all_mastered');
+    if (Object.values(catSeen).some(v => v)) onAchievement('category_clear');
+    const hour = new Date().getHours();
+    if (hour >= 22 || hour < 4) onAchievement('night_owl');
+    if (hour >= 4 && hour < 7) onAchievement('early_bird');
   }, [progress, onAchievement]);
 
   const handleTestComplete = useCallback((score, total, time) => {

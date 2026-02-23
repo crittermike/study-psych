@@ -49,6 +49,7 @@ export default function MixedTest({ recordAnswer, onAchievement, onTestComplete 
         const fs = correct ? score + 1 : score;
         onAchievement('mixed_complete');
         if (fs === questions.length) onAchievement('perfect_test');
+        if (seconds < 60) onAchievement('speed_test');
         onTestComplete(fs, questions.length, seconds);
         setPhase('results');
       } else {

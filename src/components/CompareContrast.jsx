@@ -42,6 +42,7 @@ export default function CompareContrast({ recordAnswer, onAchievement }) {
     const rd = roundsDone + 1;
     setRoundsDone(rd);
     if (rd >= 5) onAchievement('compare_5');
+    if (rd >= 10) onAchievement('compare_10');
     setPairIdx(nextIdx);
     setPhase('study');
     setChosen(null);

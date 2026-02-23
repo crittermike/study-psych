@@ -12,6 +12,7 @@ export default function Flashcards({ progress, srsRate, isDue, previewInterval, 
   const [flipped, setFlipped] = useState(false);
   const [complete, setComplete] = useState(false);
   const [showExample, setShowExample] = useState(false);
+  const [startSide, setStartSide] = useState('term');
 
   const buildDeck = useCallback((category) => {
     let pool = category ? TERMS.filter(t => t.cat === category) : [...TERMS];
@@ -103,23 +104,41 @@ export default function Flashcards({ progress, srsRate, isDue, previewInterval, 
         <div className="progress-track">
           <div className="progress-fill" style={{ width: `${(idx / deck.length) * 100}%` }} />
         </div>
+        <div className="fc-side-toggle">
+          <button className={startSide === 'term' ? 'active' : ''} onClick={() => setStartSide('term')}>Term → Def</button>
+          <button className={startSide === 'def' ? 'active' : ''} onClick={() => setStartSide('def')}>Def → Term</button>
+        </div>
         <div className="card-container" onClick={flip}>
           <div className={`card-inner${flipped ? ' flipped' : ''}`}>
             <div className="card-face card-front">
-              <span className="card-label">Term</span>
+              <span className="card-label">{startSide === 'term' ? 'Term' : 'Definition'}</span>
               <span className="card-cat">{card.cat}</span>
-              <div className="term">{card.term}</div>
+              <div className={startSide === 'term' ? 'term' : 'definition'}>{startSide === 'term' ? card.term : card.def}</div>
               <span className="hint">tap to flip · space</span>
             </div>
             <div className="card-face card-back">
-              <span className="card-label">Definition</span>
-              <div className="definition">{card.def}</div>
-              {card.example && (
-                <button className="example-toggle" onClick={(e) => { e.stopPropagation(); setShowExample(s => !s); }}>
-                  {showExample ? '▾ Hide' : '▸ Example'} (E)
-                </button>
+              <span className="card-label">{startSide === 'term' ? 'Definition' : 'Term'}</span>
+              {startSide === 'term' ? (
+                <>
+                  <div className="definition">{card.def}</div>
+                  {card.example && (
+                    <button className="example-toggle" onClick={(e) => { e.stopPropagation(); setShowExample(s => !s); }}>
+                      {showExample ? '▾ Hide' : '▸ Example'} (E)
+                    </button>
+                  )}
+                  {showExample && <div className="example-text">💡 {card.example}</div>}
+                </>
+              ) : (
+                <>
+                  <div className="term">{card.term}</div>
+                  {card.example && (
+                    <button className="example-toggle" onClick={(e) => { e.stopPropagation(); setShowExample(s => !s); }}>
+                      {showExample ? '▾ Hide' : '▸ Example'} (E)
+                    </button>
+                  )}
+                  {showExample && <div className="example-text">💡 {card.example}</div>}
+                </>
               )}
-              {showExample && <div className="example-text">💡 {card.example}</div>}
             </div>
           </div>
         </div>

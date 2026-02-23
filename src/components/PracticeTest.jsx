@@ -44,6 +44,7 @@ export default function PracticeTest({ recordAnswer, onAchievement, onTestComple
         clearInterval(timerRef.current);
         const finalScore = correct ? score + 1 : score;
         if (finalScore === questions.length) onAchievement('perfect_test');
+        if (seconds < 60) onAchievement('speed_test');
         onTestComplete(finalScore, questions.length, seconds);
         setPhase('results');
       } else {

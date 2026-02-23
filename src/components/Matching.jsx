@@ -48,6 +48,7 @@ export default function Matching({ onAchievement, onMatchComplete }) {
       if (newPaired === (pairCount || 4)) {
         clearInterval(timerRef.current);
         if (seconds < 30) onAchievement('fast_match');
+        if (seconds < 15) onAchievement('lightning_match');
         onMatchComplete(pairCount, seconds, mistakes);
         setComplete(true);
       }
