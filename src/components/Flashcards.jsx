@@ -5,6 +5,16 @@ import { shuffle } from '../utils/helpers';
 import { humanInterval } from '../hooks/useProgress';
 import { playFlip } from '../utils/sound';
 
+const DISCARDED_KEY = 'fc_discarded';
+
+function loadDiscarded() {
+  try { return new Set(JSON.parse(localStorage.getItem(DISCARDED_KEY)) || []); } catch { return new Set(); }
+}
+
+function saveDiscarded(set) {
+  localStorage.setItem(DISCARDED_KEY, JSON.stringify([...set]));
+}
+
 export default function Flashcards({ progress, srsRate, isDue, previewInterval, onAchievement }) {
   const [cat, setCat] = useState(null);
   const [deck, setDeck] = useState([]);
@@ -14,7 +24,9 @@ export default function Flashcards({ progress, srsRate, isDue, previewInterval, 
   const [showExample, setShowExample] = useState(false);
   const [startSide, setStartSide] = useState(() => localStorage.getItem('fc_start_side') || 'term');
   const [studyMode, setStudyMode] = useState(() => localStorage.getItem('fc_study_mode') || 'session');
-  const [discarded, setDiscarded] = useState(0);
+  const [discardedSet, setDiscardedSet] = useState(loadDiscarded);
+
+  const discarded = discardedSet.size;
 
   const changeStartSide = (side) => {
     setStartSide(side);
@@ -24,12 +36,21 @@ export default function Flashcards({ progress, srsRate, isDue, previewInterval, 
   const changeStudyMode = (mode) => {
     setStudyMode(mode);
     localStorage.setItem('fc_study_mode', mode);
-    buildDeck(cat);
-    setDiscarded(0);
+    if (mode === 'srs') {
+      buildDeck(cat, new Set());
+    } else {
+      buildDeck(cat, discardedSet);
+    }
   };
 
-  const buildDeck = useCallback((category) => {
+  const buildDeck = useCallback((category, discSet) => {
+    const ds = discSet !== undefined ? discSet : discardedSet;
     let pool = category ? TERMS.filter(t => t.cat === category) : [...TERMS];
+    // In session mode, filter out discarded terms
+    const currentMode = localStorage.getItem('fc_study_mode') || 'session';
+    if (currentMode === 'session') {
+      pool = pool.filter(t => !ds.has(t.term));
+    }
     pool.sort((a, b) => {
       const aDue = isDue(a.term) ? 0 : 1;
       const bDue = isDue(b.term) ? 0 : 1;
@@ -41,10 +62,9 @@ export default function Flashcards({ progress, srsRate, isDue, previewInterval, 
     setDeck(pool);
     setIdx(0);
     setFlipped(false);
-    setComplete(false);
+    setComplete(pool.length === 0);
     setShowExample(false);
-    setDiscarded(0);
-  }, [isDue, progress]);
+  }, [isDue, progress, discardedSet]);
 
   useEffect(() => { buildDeck(cat); }, []);
 
@@ -73,9 +93,13 @@ export default function Flashcards({ progress, srsRate, isDue, previewInterval, 
   const sessionRate = (action) => {
     onAchievement('first_flip');
     if (action === 'easy') {
-      // Discard card from deck
+      // Discard card from deck and persist
+      const termName = deck[idx].term;
+      const newDiscarded = new Set(discardedSet);
+      newDiscarded.add(termName);
+      setDiscardedSet(newDiscarded);
+      saveDiscarded(newDiscarded);
       const newDeck = [...deck.slice(0, idx), ...deck.slice(idx + 1)];
-      setDiscarded(d => d + 1);
       if (newDeck.length === 0) {
         setDeck(newDeck);
         setComplete(true);
@@ -103,6 +127,8 @@ export default function Flashcards({ progress, srsRate, isDue, previewInterval, 
     setFlipped(false);
     setComplete(false);
     setShowExample(false);
+    setDiscardedSet(new Set());
+    saveDiscarded(new Set());
   };
 
   useEffect(() => {
@@ -129,7 +155,7 @@ export default function Flashcards({ progress, srsRate, isDue, previewInterval, 
           <div className="trophy">🎉</div>
           <h2>Round Complete!</h2>
           <p>Reviewed all {studyMode === 'session' ? discarded : deck.length} cards in this set.</p>
-          <button onClick={() => buildDeck(cat)}>Go Again</button>
+          <button onClick={() => { setDiscardedSet(new Set()); saveDiscarded(new Set()); buildDeck(cat, new Set()); }}>Go Again</button>
         </div>
       </div>
     );
