@@ -13,10 +13,19 @@ export default function Flashcards({ progress, srsRate, isDue, previewInterval, 
   const [complete, setComplete] = useState(false);
   const [showExample, setShowExample] = useState(false);
   const [startSide, setStartSide] = useState(() => localStorage.getItem('fc_start_side') || 'term');
+  const [studyMode, setStudyMode] = useState(() => localStorage.getItem('fc_study_mode') || 'session');
+  const [discarded, setDiscarded] = useState(0);
 
   const changeStartSide = (side) => {
     setStartSide(side);
     localStorage.setItem('fc_start_side', side);
+  };
+
+  const changeStudyMode = (mode) => {
+    setStudyMode(mode);
+    localStorage.setItem('fc_study_mode', mode);
+    buildDeck(cat);
+    setDiscarded(0);
   };
 
   const buildDeck = useCallback((category) => {
@@ -34,6 +43,7 @@ export default function Flashcards({ progress, srsRate, isDue, previewInterval, 
     setFlipped(false);
     setComplete(false);
     setShowExample(false);
+    setDiscarded(0);
   }, [isDue, progress]);
 
   useEffect(() => { buildDeck(cat); }, []);
@@ -60,6 +70,32 @@ export default function Flashcards({ progress, srsRate, isDue, previewInterval, 
     }
   };
 
+  const sessionRate = (action) => {
+    onAchievement('first_flip');
+    if (action === 'easy') {
+      // Discard card from deck
+      const newDeck = [...deck.slice(0, idx), ...deck.slice(idx + 1)];
+      setDiscarded(d => d + 1);
+      if (newDeck.length === 0) {
+        setDeck(newDeck);
+        setComplete(true);
+      } else {
+        setDeck(newDeck);
+        setIdx(idx >= newDeck.length ? 0 : idx);
+        setFlipped(false);
+        setShowExample(false);
+      }
+    } else {
+      // Put card at back of deck
+      const card = deck[idx];
+      const newDeck = [...deck.slice(0, idx), ...deck.slice(idx + 1), card];
+      setDeck(newDeck);
+      setIdx(idx >= newDeck.length - 1 ? 0 : idx);
+      setFlipped(false);
+      setShowExample(false);
+    }
+  };
+
   const doShuffle = () => {
     const pool = cat ? TERMS.filter(t => t.cat === cat) : [...TERMS];
     setDeck(shuffle(pool));
@@ -73,7 +109,9 @@ export default function Flashcards({ progress, srsRate, isDue, previewInterval, 
     const handler = (e) => {
       if (e.target.tagName === 'INPUT') return;
       if (e.code === 'Space') { e.preventDefault(); flip(); }
-      if (flipped && e.key >= '1' && e.key <= '4') rate(parseInt(e.key));
+      if (flipped && studyMode === 'srs' && e.key >= '1' && e.key <= '4') rate(parseInt(e.key));
+      if (flipped && studyMode === 'session' && e.key === '1') sessionRate('hard');
+      if (flipped && studyMode === 'session' && e.key === '2') sessionRate('easy');
       if (e.code === 'KeyE' && flipped) setShowExample(s => !s);
     };
     window.addEventListener('keydown', handler);
@@ -90,7 +128,7 @@ export default function Flashcards({ progress, srsRate, isDue, previewInterval, 
         <div className="completed-msg">
           <div className="trophy">🎉</div>
           <h2>Round Complete!</h2>
-          <p>Reviewed all {deck.length} cards in this set.</p>
+          <p>Reviewed all {studyMode === 'session' ? discarded : deck.length} cards in this set.</p>
           <button onClick={() => buildDeck(cat)}>Go Again</button>
         </div>
       </div>
@@ -104,14 +142,28 @@ export default function Flashcards({ progress, srsRate, isDue, previewInterval, 
       <CategoryFilter categories={CATEGORIES} selected={cat} onSelect={changeCat} />
       <div className="flashcard-area">
         <div className="fc-due-badge">
-          {dueCount > 0 ? `⏰ ${dueCount} card${dueCount > 1 ? 's' : ''} due` : '✅ All caught up!'}
+          {studyMode === 'srs'
+            ? (dueCount > 0 ? `⏰ ${dueCount} card${dueCount > 1 ? 's' : ''} due` : '✅ All caught up!')
+            : `📋 ${deck.length} card${deck.length !== 1 ? 's' : ''} left · ${discarded} done`}
         </div>
         <div className="progress-track">
-          <div className="progress-fill" style={{ width: `${(idx / deck.length) * 100}%` }} />
+          <div className="progress-fill" style={{ width: `${studyMode === 'srs' ? (idx / deck.length) * 100 : (discarded / (deck.length + discarded)) * 100}%` }} />
         </div>
-        <div className="fc-side-toggle">
-          <button className={startSide === 'term' ? 'active' : ''} onClick={() => changeStartSide('term')}>Term → Def</button>
-          <button className={startSide === 'def' ? 'active' : ''} onClick={() => changeStartSide('def')}>Def → Term</button>
+        <div className="fc-toggles">
+          <div className="fc-side-toggle">
+            <button className={startSide === 'term' ? 'active' : ''} onClick={() => changeStartSide('term')}>Term → Definition</button>
+            <button className={startSide === 'def' ? 'active' : ''} onClick={() => changeStartSide('def')}>Definition → Term</button>
+          </div>
+          <div className="fc-mode-toggle">
+            <button className={`fc-mode-btn${studyMode === 'session' ? ' active' : ''}`} onClick={() => changeStudyMode('session')}>
+              <span className="fc-mode-label">🗂️ Keep / Discard</span>
+              <span className="fc-mode-desc">Hard cards go back in the deck, easy cards are removed</span>
+            </button>
+            <button className={`fc-mode-btn${studyMode === 'srs' ? ' active' : ''}`} onClick={() => changeStudyMode('srs')}>
+              <span className="fc-mode-label">📅 Spaced Review</span>
+              <span className="fc-mode-desc">Rate difficulty to schedule when you'll see each card again</span>
+            </button>
+          </div>
         </div>
         <div className="card-container" onClick={flip}>
           <div className={`card-inner${flipped ? ' flipped' : ''}`}>
@@ -147,7 +199,7 @@ export default function Flashcards({ progress, srsRate, isDue, previewInterval, 
             </div>
           </div>
         </div>
-        {flipped && (
+        {flipped && studyMode === 'srs' && (
           <div className="conf-btns">
             {[1,2,3,4].map(c => (
               <button key={c} className={`conf-btn c${c}`} onClick={() => rate(c)}>
@@ -157,7 +209,19 @@ export default function Flashcards({ progress, srsRate, isDue, previewInterval, 
             ))}
           </div>
         )}
-        <div className="counter">{idx + 1} / {deck.length}</div>
+        {flipped && studyMode === 'session' && (
+          <div className="conf-btns session-btns">
+            <button className="conf-btn c2" onClick={() => sessionRate('hard')}>
+              Hard
+              <span className="next-time">back of deck</span>
+            </button>
+            <button className="conf-btn c4" onClick={() => sessionRate('easy')}>
+              Easy
+              <span className="next-time">remove</span>
+            </button>
+          </div>
+        )}
+        <div className="counter">{studyMode === 'srs' ? `${idx + 1} / ${deck.length}` : `${discarded + 1} / ${deck.length + discarded}`}</div>
         <button className="shuffle-btn" onClick={doShuffle}>🔀 Shuffle &amp; Restart</button>
       </div>
     </div>
