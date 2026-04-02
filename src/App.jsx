@@ -106,7 +106,7 @@ export default function App() {
 
       <header>
         <h1>AP Psychology</h1>
-        <p>Memory &amp; Cognition — Study Tools</p>
+        <p>Social Psychology, Motivation &amp; Personality — Study Tools</p>
       </header>
 
       <nav className="modes">

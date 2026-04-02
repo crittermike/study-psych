@@ -1,7 +1,7 @@
 # AP Psychology Study App
 
 ## Project Overview
-A React (Vite) single-page app for studying AP Psychology — Memory, Cognition, and Perception. Deployed to GitHub Pages at https://crittermike.github.io/study-psych/.
+A React (Vite) single-page app for studying AP Psychology — Social Psychology, Motivation, Emotion & Personality. Deployed to GitHub Pages at https://crittermike.github.io/study-psych/.
 
 ## Tech Stack
 - **Framework**: React 19 with Vite 7
@@ -52,13 +52,13 @@ Users can also toggle which side to start on — Term → Definition or Definiti
 ### Term object (`data/terms.js`)
 Each term has: `term`, `def`, `cat` (category), `blank` (keyword for fill-in-the-blank), `accept[]` (alternative accepted answers for write-it), `example` (real-world AP scenario).
 
-Currently 156 terms across 16 categories: Social & Cognitive Learning, Classical Conditioning, Biological Learning, Operant Conditioning, Reinforcement Schedules, Developmental Foundations, Physical Development, Puberty & Gender, Piaget's Stages, Vygotsky & Intelligence, Language Development, Ecological Systems, Parenting & Attachment, Social Development, Erikson's Stages, Identity Development.
+Currently 121 terms across 16 categories: Attributions, Social Perception, Prejudice & Discrimination, Attitudes & Cognition, Social Influence, Group Dynamics, Prosocial Behavior, Work & Organizational Psychology, Motivation, Arousal & Sensation Seeking, Motivational Conflicts, Emotion, Psychodynamic Theory, Defense Mechanisms, Humanistic & Social-Cognitive Psychology, Personality & Self.
 
 ### Progress (`hooks/useProgress.js`)
 Stored in `localStorage` under key `ap_progress`. Per-term object: `{ conf, seen, correct, interval, ease, nextReview, lastReview }`. Uses a simplified SM-2 spaced repetition algorithm.
 
 ### Confused Pairs (`data/terms.js`)
-`CONFUSED_PAIRS` array of `[termA, termB]` for Compare & Contrast mode. 30 pairs of commonly confused AP Psych concepts.
+`CONFUSED_PAIRS` array of `[termA, termB]` for Compare & Contrast mode. 40 pairs of commonly confused AP Psych concepts.
 
 ### localStorage Keys
 | Key | Purpose |
