@@ -62,6 +62,10 @@ export default function Home({ setMode, progress }) {
         </div>
       </div>
 
+      <div className="update-panel">
+        <strong>Updated unit set:</strong> Health Psychology + Clinical Psychology terminology from the newest review screenshots.
+      </div>
+
       {/* Activity cards */}
       <div className="home-grid">
         {cards.map(c => (

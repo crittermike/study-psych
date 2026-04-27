@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useProgress } from './hooks/useProgress';
-import { loadAchievements, saveAchievements, unlockAchievement, ACHIEVEMENT_DEFS } from './utils/achievements';
+import { loadAchievements, unlockAchievement, ACHIEVEMENT_DEFS } from './utils/achievements';
 import { loadLeaderboard, addTestScore, addMatchTime, addStreak } from './utils/leaderboard';
 import { playAchievement } from './utils/sound';
 import { TERMS } from './data/terms';
@@ -31,7 +31,7 @@ const MODES = [
 
 export default function App() {
   const [mode, setMode] = useState('home');
-  const { progress, getP, srsRate, recordAnswer, isDue, previewInterval } = useProgress();
+  const { progress, srsRate, recordAnswer, isDue, previewInterval } = useProgress();
   const [achievements, setAchievements] = useState(loadAchievements);
   const [leaderboard, setLeaderboard] = useState(loadLeaderboard);
   const [toast, setToast] = useState(null);
@@ -105,8 +105,9 @@ export default function App() {
       )}
 
       <header>
-        <h1>AP Psychology</h1>
-        <p>Social Psychology, Motivation &amp; Personality — Study Tools</p>
+        <div className="update-badge">Last updated Apr 27, 2026</div>
+        <h1>AP Psychology Health &amp; Clinical Review</h1>
+        <p>New terms for the upcoming test: health psychology, clinical disorders, therapies, ethics, and biomedical treatments.</p>
       </header>
 
       <nav className="modes">
