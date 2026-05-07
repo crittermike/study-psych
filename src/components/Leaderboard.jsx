@@ -66,10 +66,30 @@ export default function Leaderboard({ achievements, leaderboard }) {
         </>
       )}
 
+      {/* Speed Round scores */}
+      {leaderboard.speed && leaderboard.speed.length > 0 && (
+        <>
+          <h2 className="lb-heading">⚡ Best Speed Rounds</h2>
+          <div className="lb-table">
+            <div className="lb-row lb-header">
+              <span>#</span><span>Score</span><span>Round</span><span>Unit</span>
+            </div>
+            {leaderboard.speed.map((s, i) => (
+              <div key={i} className="lb-row">
+                <span>{i + 1}</span>
+                <span className="accent-text">{s.score} ✅</span>
+                <span>{s.length}s</span>
+                <span title={s.unit}>{s.unit}</span>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
       {/* Streaks */}
       {leaderboard.streaks.length > 0 && (
         <>
-          <h2 className="lb-heading">⚡ Longest Streaks</h2>
+          <h2 className="lb-heading">🔥 Longest Streaks</h2>
           <div className="lb-table">
             <div className="lb-row lb-header">
               <span>#</span><span>Streak</span><span>Date</span>
@@ -85,9 +105,12 @@ export default function Leaderboard({ achievements, leaderboard }) {
         </>
       )}
 
-      {leaderboard.tests.length === 0 && leaderboard.matches.length === 0 && (
+      {leaderboard.tests.length === 0
+        && leaderboard.matches.length === 0
+        && (!leaderboard.speed || leaderboard.speed.length === 0)
+        && leaderboard.streaks.length === 0 && (
         <p style={{ textAlign: 'center', color: 'var(--text-dim)', marginTop: '1rem' }}>
-          Complete tests and matches to see your scores here!
+          Complete tests, matches, and speed rounds to see your scores here!
         </p>
       )}
     </div>

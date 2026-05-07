@@ -1,17 +1,17 @@
 import { useState, useEffect, useRef } from 'react';
-import { TERMS } from '../data/terms';
+import { useUnit } from '../context/UnitContext';
 import { shuffle, formatTime, isCorrectTerm, normText, escapeRegex } from '../utils/helpers';
 import { playCorrect, playWrong } from '../utils/sound';
 
 // Mixed test: multiple-choice, write-it, fill-blank, and scenario-based
-function generateQuestions(count) {
-  const pool = shuffle([...TERMS]);
-  const n = Math.min(count, pool.length);
+function generateQuestions(pool, count) {
+  const shuffled = shuffle([...pool]);
+  const n = Math.min(count, shuffled.length);
   const types = ['mc', 'write', 'blank', 'scenario'];
-  return pool.slice(0, n).map((item, i) => {
+  return shuffled.slice(0, n).map((item, i) => {
     const type = types[i % types.length];
     if (type === 'mc') {
-      const wrongs = shuffle(TERMS.filter(t => t.term !== item.term)).slice(0, 3);
+      const wrongs = shuffle(pool.filter(t => t.term !== item.term)).slice(0, 3);
       return { type, item, options: shuffle([item, ...wrongs]), answer: null };
     }
     return { type, item, answer: null };
@@ -19,6 +19,7 @@ function generateQuestions(count) {
 }
 
 export default function MixedTest({ recordAnswer, onAchievement, onTestComplete }) {
+  const { terms, unit } = useUnit();
   const [phase, setPhase] = useState('config');
   const [qLen, setQLen] = useState(12);
   const [questions, setQuestions] = useState([]);
@@ -32,13 +33,19 @@ export default function MixedTest({ recordAnswer, onAchievement, onTestComplete 
 
   const start = () => {
     clearInterval(timerRef.current);
-    setQuestions(generateQuestions(qLen));
+    setQuestions(generateQuestions(terms, qLen));
     setQIdx(0); setScore(0); setSeconds(0); setInput(''); setFeedback(null);
     setPhase('active');
     timerRef.current = setInterval(() => setSeconds(s => s + 1), 1000);
   };
 
   useEffect(() => () => clearInterval(timerRef.current), []);
+
+  // Reset when unit changes
+  useEffect(() => {
+    clearInterval(timerRef.current);
+    setPhase('config');
+  }, [unit]);
 
   const advance = (correct) => {
     if (correct) setScore(s => s + 1);

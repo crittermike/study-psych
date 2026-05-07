@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { TERMS, CATEGORIES } from '../data/terms';
+import { useUnit } from '../context/UnitContext';
 import CategoryFilter from './CategoryFilter';
 import { shuffle } from '../utils/helpers';
 import { humanInterval } from '../hooks/useProgress';
@@ -16,6 +16,7 @@ function saveDiscarded(set) {
 }
 
 export default function Flashcards({ progress, srsRate, isDue, previewInterval, onAchievement }) {
+  const { terms, categories, unit } = useUnit();
   const [cat, setCat] = useState(null);
   const [deck, setDeck] = useState([]);
   const [idx, setIdx] = useState(0);
@@ -33,20 +34,9 @@ export default function Flashcards({ progress, srsRate, isDue, previewInterval, 
     localStorage.setItem('fc_start_side', side);
   };
 
-  const changeStudyMode = (mode) => {
-    setStudyMode(mode);
-    localStorage.setItem('fc_study_mode', mode);
-    if (mode === 'srs') {
-      buildDeck(cat, new Set());
-    } else {
-      buildDeck(cat, discardedSet);
-    }
-  };
-
   const buildDeck = useCallback((category, discSet) => {
     const ds = discSet !== undefined ? discSet : discardedSet;
-    let pool = category ? TERMS.filter(t => t.cat === category) : [...TERMS];
-    // In session mode, filter out discarded terms
+    let pool = category ? terms.filter(t => t.cat === category) : [...terms];
     const currentMode = localStorage.getItem('fc_study_mode') || 'session';
     if (currentMode === 'session') {
       pool = pool.filter(t => !ds.has(t.term));
@@ -64,8 +54,30 @@ export default function Flashcards({ progress, srsRate, isDue, previewInterval, 
     setFlipped(false);
     setComplete(pool.length === 0);
     setShowExample(false);
-  }, [isDue, progress, discardedSet]);
+  }, [isDue, progress, discardedSet, terms]);
 
+  const changeStudyMode = (mode) => {
+    setStudyMode(mode);
+    localStorage.setItem('fc_study_mode', mode);
+    if (mode === 'srs') {
+      buildDeck(cat, new Set());
+    } else {
+      buildDeck(cat, discardedSet);
+    }
+  };
+
+  // Reset category when unit changes if it no longer fits.
+  useEffect(() => {
+    if (cat && !categories.includes(cat)) {
+      setCat(null);
+      buildDeck(null);
+    } else {
+      buildDeck(cat);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [unit]);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { buildDeck(cat); }, []);
 
   const changeCat = (c) => { setCat(c); buildDeck(c); };
@@ -93,7 +105,6 @@ export default function Flashcards({ progress, srsRate, isDue, previewInterval, 
   const sessionRate = (action) => {
     onAchievement('first_flip');
     if (action === 'easy') {
-      // Discard card from deck and persist
       const termName = deck[idx].term;
       const newDiscarded = new Set(discardedSet);
       newDiscarded.add(termName);
@@ -110,7 +121,6 @@ export default function Flashcards({ progress, srsRate, isDue, previewInterval, 
         setShowExample(false);
       }
     } else {
-      // Put card at back of deck
       const card = deck[idx];
       const newDeck = [...deck.slice(0, idx), ...deck.slice(idx + 1), card];
       setDeck(newDeck);
@@ -121,7 +131,7 @@ export default function Flashcards({ progress, srsRate, isDue, previewInterval, 
   };
 
   const doShuffle = () => {
-    const pool = cat ? TERMS.filter(t => t.cat === cat) : [...TERMS];
+    const pool = cat ? terms.filter(t => t.cat === cat) : [...terms];
     setDeck(shuffle(pool));
     setIdx(0);
     setFlipped(false);
@@ -150,7 +160,7 @@ export default function Flashcards({ progress, srsRate, isDue, previewInterval, 
   if (complete) {
     return (
       <div>
-        <CategoryFilter categories={CATEGORIES} selected={cat} onSelect={changeCat} />
+        <CategoryFilter categories={categories} selected={cat} onSelect={changeCat} />
         <div className="completed-msg">
           <div className="trophy">🎉</div>
           <h2>Round Complete!</h2>
@@ -165,7 +175,7 @@ export default function Flashcards({ progress, srsRate, isDue, previewInterval, 
 
   return (
     <div>
-      <CategoryFilter categories={CATEGORIES} selected={cat} onSelect={changeCat} />
+      <CategoryFilter categories={categories} selected={cat} onSelect={changeCat} />
       <div className="flashcard-area">
         <div className="fc-due-badge">
           {studyMode === 'srs'

@@ -22,6 +22,10 @@ export const ACHIEVEMENT_DEFS = [
   { id:'mixed_complete', icon:'🧠', title:'Well Rounded', desc:'Complete a mixed practice test' },
   { id:'night_owl', icon:'🦉', title:'Night Owl', desc:'Study after 10 PM' },
   { id:'early_bird', icon:'🐦', title:'Early Bird', desc:'Study before 7 AM' },
+  { id:'speed_round_10', icon:'⚡', title:'Quick Draw', desc:'Hit 10+ correct in a Speed Round' },
+  { id:'speed_round_25', icon:'🚀', title:'Speed Demon', desc:'Hit 25+ correct in a Speed Round' },
+  { id:'scenario_streak_5', icon:'🎯', title:'Pattern Spotter', desc:'5-in-a-row on Scenario Challenge' },
+  { id:'scenario_streak_10', icon:'🔮', title:'Mind Reader', desc:'10-in-a-row on Scenario Challenge' },
 ];
 
 export function loadAchievements() {

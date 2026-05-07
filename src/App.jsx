@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useProgress } from './hooks/useProgress';
 import { loadAchievements, unlockAchievement, ACHIEVEMENT_DEFS } from './utils/achievements';
-import { loadLeaderboard, addTestScore, addMatchTime, addStreak } from './utils/leaderboard';
+import { loadLeaderboard, addTestScore, addMatchTime, addStreak, addSpeedScore } from './utils/leaderboard';
 import { playAchievement } from './utils/sound';
 import { TERMS } from './data/terms';
 import Home from './components/Home';
@@ -14,14 +14,22 @@ import MixedTest from './components/MixedTest';
 import CompareContrast from './components/CompareContrast';
 import HardestTerms from './components/HardestTerms';
 import Leaderboard from './components/Leaderboard';
+import KeyConcepts from './components/KeyConcepts';
+import SpeedRound from './components/SpeedRound';
+import ScenarioChallenge from './components/ScenarioChallenge';
+import Countdown from './components/Countdown';
+import UnitPicker from './components/UnitPicker';
 import './App.css';
 
 const MODES = [
   { id:'home', icon:'🏠', label:'Home' },
+  { id:'concepts', icon:'🔥', label:'Key Concepts' },
   { id:'flashcards', icon:'🃏', label:'Cards' },
   { id:'write', icon:'✍️', label:'Write' },
   { id:'blanks', icon:'📝', label:'Blanks' },
   { id:'matching', icon:'🧩', label:'Match' },
+  { id:'speed', icon:'⚡', label:'Speed' },
+  { id:'scenario', icon:'🎯', label:'Scenario' },
   { id:'test', icon:'📋', label:'Test' },
   { id:'mixed', icon:'🧠', label:'Mixed' },
   { id:'compare', icon:'🔍', label:'Compare' },
@@ -42,7 +50,8 @@ export default function App() {
     unlockAchievement(id, achievements, setAchievements, setToast);
   }, [achievements]);
 
-  // Check global achievements
+  // Global achievements use the FULL term set so all-time mastery isn't reset
+  // when the user picks a single unit.
   const checkGlobalAchievements = useCallback(() => {
     let totalCorrect = 0;
     let allSeen = true;
@@ -91,9 +100,13 @@ export default function App() {
     checkGlobalAchievements();
   }, [checkGlobalAchievements]);
 
+  const handleSpeedComplete = useCallback(({ score, length, unit }) => {
+    setLeaderboard(lb => addSpeedScore({ ...lb }, score, length, unit));
+    checkGlobalAchievements();
+  }, [checkGlobalAchievements]);
+
   return (
     <div className="app">
-      {/* Toast notification for achievements */}
       {toast && (
         <div className="toast">
           <span className="toast-icon">{toast.icon}</span>
@@ -105,9 +118,11 @@ export default function App() {
       )}
 
       <header>
-        <div className="update-badge">Last updated Apr 27, 2026</div>
-        <h1>AP Psychology Health &amp; Clinical Review</h1>
-        <p>New terms for the upcoming test: health psychology, clinical disorders, therapies, ethics, and biomedical treatments.</p>
+        <div className="update-badge">🚨 Crunch Time · Updated May 7, 2026</div>
+        <h1>AP Psych Final Exam Review</h1>
+        <p>Year-long content for the May 12 final — every unit, every term, in one cram-session site. Pick a unit or run the full mix.</p>
+        <Countdown />
+        <UnitPicker />
       </header>
 
       <nav className="modes">
@@ -122,10 +137,13 @@ export default function App() {
 
       <main>
         {mode === 'home' && <Home setMode={setMode} progress={progress} />}
+        {mode === 'concepts' && <KeyConcepts setMode={setMode} />}
         {mode === 'flashcards' && <Flashcards progress={progress} srsRate={srsRate} isDue={isDue} previewInterval={previewInterval} onAchievement={onAchievement} />}
         {mode === 'write' && <WriteIt recordAnswer={recordAnswer} onAchievement={onAchievement} onStreak={handleStreak} />}
         {mode === 'blanks' && <FillBlank recordAnswer={recordAnswer} onAchievement={onAchievement} onStreak={handleStreak} />}
         {mode === 'matching' && <Matching onAchievement={onAchievement} onMatchComplete={handleMatchComplete} />}
+        {mode === 'speed' && <SpeedRound recordAnswer={recordAnswer} onAchievement={onAchievement} onSpeedComplete={handleSpeedComplete} />}
+        {mode === 'scenario' && <ScenarioChallenge recordAnswer={recordAnswer} onAchievement={onAchievement} />}
         {mode === 'test' && <PracticeTest recordAnswer={recordAnswer} onAchievement={onAchievement} onTestComplete={handleTestComplete} />}
         {mode === 'mixed' && <MixedTest recordAnswer={recordAnswer} onAchievement={onAchievement} onTestComplete={handleTestComplete} />}
         {mode === 'compare' && <CompareContrast recordAnswer={recordAnswer} onAchievement={onAchievement} />}

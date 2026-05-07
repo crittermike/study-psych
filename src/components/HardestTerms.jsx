@@ -1,16 +1,12 @@
-import { useState, useCallback } from 'react';
-import { TERMS } from '../data/terms';
+import { useState, useCallback, useEffect } from 'react';
+import { useUnit } from '../context/UnitContext';
 import { humanInterval } from '../hooks/useProgress';
 import { playFlip } from '../utils/sound';
 
 export default function HardestTerms({ progress, srsRate, onAchievement }) {
-  const [deck, setDeck] = useState(() => buildDeck(progress));
-  const [idx, setIdx] = useState(0);
-  const [flipped, setFlipped] = useState(false);
-  const [complete, setComplete] = useState(false);
-
-  function buildDeck(prog) {
-    const seen = TERMS.filter(t => prog[t.term]?.seen > 0);
+  const { terms, unit } = useUnit();
+  const buildDeck = useCallback((prog) => {
+    const seen = terms.filter(t => prog[t.term]?.seen > 0);
     if (seen.length < 3) return [];
     seen.sort((a, b) => {
       const pa = prog[a.term], pb = prog[b.term];
@@ -19,7 +15,21 @@ export default function HardestTerms({ progress, srsRate, onAchievement }) {
       return (pa.conf || 0) - (pb.conf || 0);
     });
     return seen.slice(0, Math.min(10, seen.length));
-  }
+  }, [terms]);
+
+  const [deck, setDeck] = useState(() => buildDeck(progress));
+  const [idx, setIdx] = useState(0);
+  const [flipped, setFlipped] = useState(false);
+  const [complete, setComplete] = useState(false);
+
+  // Rebuild on unit change
+  useEffect(() => {
+    setDeck(buildDeck(progress));
+    setIdx(0);
+    setFlipped(false);
+    setComplete(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [unit]);
 
   const restart = () => {
     setDeck(buildDeck(progress));

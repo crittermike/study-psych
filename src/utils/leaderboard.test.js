@@ -7,18 +7,18 @@ beforeEach(() => {
 
 describe('loadLeaderboard', () => {
   it('returns default structure when empty', () => {
-    expect(loadLeaderboard()).toEqual({ tests: [], matches: [], streaks: [] });
+    expect(loadLeaderboard()).toEqual({ tests: [], matches: [], streaks: [], speed: [] });
   });
 
   it('round-trips data', () => {
-    const data = { tests: [{ score: 10 }], matches: [], streaks: [] };
+    const data = { tests: [{ score: 10 }], matches: [], streaks: [], speed: [] };
     saveLeaderboard(data);
     expect(loadLeaderboard()).toEqual(data);
   });
 
   it('returns default on corrupt data', () => {
     localStorage.setItem('ap_leaderboard', 'bad');
-    expect(loadLeaderboard()).toEqual({ tests: [], matches: [], streaks: [] });
+    expect(loadLeaderboard()).toEqual({ tests: [], matches: [], streaks: [], speed: [] });
   });
 });
 

@@ -1,8 +1,10 @@
-import { TERMS, CATEGORIES } from '../data/terms';
+import { useUnit } from '../context/UnitContext';
 
 export default function Home({ setMode, progress }) {
+  const { terms, categories, unit, isAllUnits } = useUnit();
+
   let mastered = 0, totalSeen = 0, totalCorrect = 0, due = 0;
-  TERMS.forEach(t => {
+  terms.forEach(t => {
     const p = progress[t.term];
     if (p) {
       if (p.conf >= 4 && p.interval >= 86400000) mastered++;
@@ -13,12 +15,16 @@ export default function Home({ setMode, progress }) {
     if (isDue) due++;
   });
   const accuracy = totalSeen > 0 ? Math.round(totalCorrect / totalSeen * 100) + '%' : '—';
+  const ringPct = terms.length > 0 ? (mastered / terms.length) * 327 : 0;
 
   const cards = [
+    { mode:'concepts', icon:'🔥', title:'Key Concepts', desc:'High-yield must-knows for the final.' },
     { mode:'flashcards', icon:'🃏', title:'Flashcards', desc:'SRS-powered spaced repetition. Due cards first.' },
     { mode:'write', icon:'✍️', title:'Write It', desc:'See the definition, type the term.' },
     { mode:'blanks', icon:'📝', title:'Fill Blank', desc:'Key words removed — fill them in.' },
     { mode:'matching', icon:'🧩', title:'Match', desc:'Pair terms with definitions vs. the clock.' },
+    { mode:'speed', icon:'⚡', title:'Speed Round', desc:'Type as many right answers as you can before the buzzer.' },
+    { mode:'scenario', icon:'🎯', title:'Scenario', desc:'Pick the term that matches the situation.' },
     { mode:'test', icon:'📋', title:'Practice Test', desc:'Timed multiple-choice quiz.' },
     { mode:'mixed', icon:'🧠', title:'Mixed Test', desc:'All question types combined.' },
     { mode:'compare', icon:'🔍', title:'Compare', desc:'Commonly confused term pairs.' },
@@ -34,7 +40,7 @@ export default function Home({ setMode, progress }) {
           <svg viewBox="0 0 120 120" className="ring-svg">
             <circle cx="60" cy="60" r="52" fill="none" stroke="var(--surface2)" strokeWidth="8" />
             <circle cx="60" cy="60" r="52" fill="none" stroke="url(#grad)" strokeWidth="8"
-              strokeDasharray={`${(mastered / TERMS.length) * 327} 327`}
+              strokeDasharray={`${ringPct} 327`}
               strokeLinecap="round" transform="rotate(-90 60 60)" />
             <defs><linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="var(--accent)" />
@@ -48,8 +54,8 @@ export default function Home({ setMode, progress }) {
         </div>
         <div className="hero-stat-list">
           <div className="hero-stat-item">
-            <span className="hsi-num">{TERMS.length}</span>
-            <span className="hsi-label">Total Terms</span>
+            <span className="hsi-num">{terms.length}</span>
+            <span className="hsi-label">{isAllUnits ? 'Total Terms' : 'Unit Terms'}</span>
           </div>
           <div className="hero-stat-item">
             <span className="hsi-num accent-text">{due}</span>
@@ -63,7 +69,10 @@ export default function Home({ setMode, progress }) {
       </div>
 
       <div className="update-panel">
-        <strong>Updated unit set:</strong> Health Psychology + Clinical Psychology terminology from the newest review screenshots.
+        <strong>{isAllUnits ? '🎓 Final Exam Mix' : `📖 ${unit}`}:</strong>{' '}
+        {isAllUnits
+          ? `All ${terms.length} year-long terms across every AP Psych unit. Switch units in the picker above to drill one section at a time.`
+          : `${terms.length} terms in this unit. Pick "All Units" above for the full final-exam mix.`}
       </div>
 
       {/* Activity cards */}
@@ -79,9 +88,9 @@ export default function Home({ setMode, progress }) {
 
       {/* Category progress */}
       <div className="cat-progress-section">
-        <h3>Progress by Category</h3>
-        {CATEGORIES.map(cat => {
-          const catTerms = TERMS.filter(t => t.cat === cat);
+        <h3>Progress by Category {isAllUnits ? '(all units)' : `· ${unit}`}</h3>
+        {categories.map(cat => {
+          const catTerms = terms.filter(t => t.cat === cat);
           let cc = 0, cs = 0;
           catTerms.forEach(t => { const p = progress[t.term]; if (p) { cc += p.correct; cs += p.seen; } });
           const pct = cs > 0 ? Math.round(cc / cs * 100) : 0;

@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import { TERMS } from '../data/terms';
+import { useUnit } from '../context/UnitContext';
 import { shuffle, formatTime } from '../utils/helpers';
 import { playCorrect, playWrong } from '../utils/sound';
 
 export default function PracticeTest({ recordAnswer, onAchievement, onTestComplete }) {
-  const [phase, setPhase] = useState('config'); // config | active | results
+  const { terms, unit } = useUnit();
+  const [phase, setPhase] = useState('config');
   const [qLen, setQLen] = useState(10);
   const [questions, setQuestions] = useState([]);
   const [qIdx, setQIdx] = useState(0);
@@ -15,10 +16,10 @@ export default function PracticeTest({ recordAnswer, onAchievement, onTestComple
 
   const start = () => {
     clearInterval(timerRef.current);
-    const pool = shuffle([...TERMS]);
+    const pool = shuffle([...terms]);
     const count = Math.min(qLen, pool.length);
     const qs = pool.slice(0, count).map(item => {
-      const wrongs = shuffle(TERMS.filter(t => t.term !== item.term)).slice(0, 3);
+      const wrongs = shuffle(terms.filter(t => t.term !== item.term)).slice(0, 3);
       return { item, options: shuffle([item, ...wrongs]), chosen: null };
     });
     setQuestions(qs);
@@ -28,6 +29,12 @@ export default function PracticeTest({ recordAnswer, onAchievement, onTestComple
   };
 
   useEffect(() => () => clearInterval(timerRef.current), []);
+
+  // Reset when unit changes
+  useEffect(() => {
+    clearInterval(timerRef.current);
+    setPhase('config');
+  }, [unit]);
 
   const answer = (opt) => {
     if (chosen) return;
@@ -60,10 +67,10 @@ export default function PracticeTest({ recordAnswer, onAchievement, onTestComple
         <h2>📋 Practice Test</h2>
         <p>Timed multiple-choice. Pick your length:</p>
         <div className="test-length-picker">
-          {[10, 20, TERMS.length].map(n => (
+          {[10, 20, terms.length].map(n => (
             <button key={n} className={`diff-btn${qLen === n ? ' active' : ''}`}
               onClick={() => setQLen(n)}>
-              {n === TERMS.length ? 'All' : `${n} Qs`}
+              {n === terms.length ? 'All' : `${n} Qs`}
             </button>
           ))}
         </div>

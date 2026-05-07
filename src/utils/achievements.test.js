@@ -20,8 +20,8 @@ describe('ACHIEVEMENT_DEFS', () => {
     });
   });
 
-  it('has 21 achievements', () => {
-    expect(ACHIEVEMENT_DEFS).toHaveLength(21);
+  it('has 25 achievements', () => {
+    expect(ACHIEVEMENT_DEFS).toHaveLength(25);
   });
 });
 

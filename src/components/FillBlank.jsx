@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { TERMS, CATEGORIES } from '../data/terms';
+import { useUnit } from '../context/UnitContext';
 import CategoryFilter from './CategoryFilter';
 import { shuffle, normText, escapeRegex } from '../utils/helpers';
 import { playCorrect, playWrong } from '../utils/sound';
 
 export default function FillBlank({ recordAnswer, onAchievement, onStreak }) {
+  const { terms, categories, unit } = useUnit();
   const [cat, setCat] = useState(null);
   const [deck, setDeck] = useState([]);
   const [idx, setIdx] = useState(0);
@@ -16,12 +17,24 @@ export default function FillBlank({ recordAnswer, onAchievement, onStreak }) {
   const inputRef = useRef();
 
   const build = useCallback((category) => {
-    const pool = category ? TERMS.filter(t => t.cat === category) : [...TERMS];
+    const pool = category ? terms.filter(t => t.cat === category) : [...terms];
     setDeck(shuffle(pool));
     setIdx(0); setScore(0); setStreak(0); setInput(''); setFeedback(null); setDone(false);
-  }, []);
+  }, [terms]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { build(cat); }, []);
+
+  useEffect(() => {
+    if (cat && !categories.includes(cat)) {
+      setCat(null);
+      build(null);
+    } else {
+      build(cat);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [unit]);
+
   const changeCat = (c) => { setCat(c); build(c); };
 
   const blankHtml = (item) => {
@@ -63,7 +76,7 @@ export default function FillBlank({ recordAnswer, onAchievement, onStreak }) {
   if (done) {
     return (
       <div>
-        <CategoryFilter categories={CATEGORIES} selected={cat} onSelect={changeCat} />
+        <CategoryFilter categories={categories} selected={cat} onSelect={changeCat} />
         <div className="completed-msg">
           <div className="trophy">🎉</div><h2>All Done!</h2>
           <p>You got {score} out of {deck.length} correct.</p>
@@ -78,7 +91,7 @@ export default function FillBlank({ recordAnswer, onAchievement, onStreak }) {
 
   return (
     <div>
-      <CategoryFilter categories={CATEGORIES} selected={cat} onSelect={changeCat} />
+      <CategoryFilter categories={categories} selected={cat} onSelect={changeCat} />
       <div className="input-mode">
         <div className="input-stats">
           <div className="stat"><div className="num">{score}</div><div className="label">Correct</div></div>

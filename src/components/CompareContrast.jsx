@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
-import { CONFUSED_PAIRS, getTermByName } from '../data/terms';
+import { getTermByName } from '../data/terms';
+import { useUnit } from '../context/UnitContext';
 import { shuffle } from '../utils/helpers';
-import { playCorrect, playWrong, playFlip } from '../utils/sound';
+import { playCorrect, playWrong } from '../utils/sound';
 
 export default function CompareContrast({ recordAnswer, onAchievement }) {
-  const [pairs] = useState(() => shuffle([...CONFUSED_PAIRS]));
+  const { pairs: unitPairs, unit } = useUnit();
+  const [pairs, setPairs] = useState(() => shuffle([...unitPairs]));
   const [pairIdx, setPairIdx] = useState(0);
   const [phase, setPhase] = useState('study'); // study | quiz | feedback
   const [quizTerm, setQuizTerm] = useState(null);
@@ -12,6 +14,25 @@ export default function CompareContrast({ recordAnswer, onAchievement }) {
   const [roundsDone, setRoundsDone] = useState(0);
   const [score, setScore] = useState(0);
   const [total, setTotal] = useState(0);
+
+  // Refresh pairs when the active unit changes.
+  useEffect(() => {
+    setPairs(shuffle([...unitPairs]));
+    setPairIdx(0);
+    setPhase('study');
+    setQuizTerm(null);
+    setChosen(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [unit]);
+
+  if (pairs.length === 0) {
+    return (
+      <div className="hardest-empty">
+        <div className="icon">🔍</div>
+        <p>No commonly-confused term pairs are defined for <strong>{unit}</strong> yet. Switch units to keep going.</p>
+      </div>
+    );
+  }
 
   const pair = pairs[pairIdx % pairs.length];
   const termA = getTermByName(pair[0]);

@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import { TERMS } from '../data/terms';
+import { useUnit } from '../context/UnitContext';
 import { shuffle, formatTime } from '../utils/helpers';
 import { playMatch, playWrong } from '../utils/sound';
 
 export default function Matching({ onAchievement, onMatchComplete }) {
+  const { terms, unit } = useUnit();
   const [pairCount, setPairCount] = useState(4);
   const [tiles, setTiles] = useState([]);
   const [selected, setSelected] = useState(null);
@@ -16,7 +17,7 @@ export default function Matching({ onAchievement, onMatchComplete }) {
   const init = (count) => {
     const c = count || pairCount;
     clearInterval(timerRef.current);
-    const subset = shuffle([...TERMS]).slice(0, c);
+    const subset = shuffle([...terms]).slice(0, c);
     const items = [];
     subset.forEach((item, i) => {
       items.push({ id: `t${i}`, pairId: i, type: 'term', text: item.term, matched: false });
@@ -27,7 +28,10 @@ export default function Matching({ onAchievement, onMatchComplete }) {
     timerRef.current = setInterval(() => setSeconds(s => s + 1), 1000);
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { init(); return () => clearInterval(timerRef.current); }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { init(); }, [unit]);
 
   const changeDiff = (n) => { setPairCount(n); init(n); };
 
